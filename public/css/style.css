@@ -1,0 +1,175 @@
+/* public/css/style.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6f9;
+  color: #1a1a1a;
+}
+
+/* Top bar */
+.topbar {
+  background: #1e293b;
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+.topbar h1 {
+  font-size: 22px;
+}
+
+.topbar .subtitle {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 30px;
+}
+
+.tab-btn {
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn.active {
+  color: #1e293b;
+  border-bottom: 3px solid #3b82f6;
+  font-weight: 600;
+}
+
+.tab-btn:hover {
+  color: #1e293b;
+}
+
+/* Main content area */
+main {
+  padding: 30px;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-panel h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+/* Stats cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Seat grid */
+.seat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 60px);
+  gap: 10px;
+}
+
+.seat {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.seat.occupied {
+  background: #3b82f6;
+  color: white;
+}
+
+.seat:hover {
+  border: 2px solid #1e293b;
+}
+
+/* Table */
+table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+  background: #f1f5f9;
+  font-size: 13px;
+  color: #475569;
+}
+
+/* Buttons */
+button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 15px;
+  margin-right: 10px;
+}
+
+button:hover {
+  background: #2563eb;
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard - AR Classroom Attendance</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h1>AR Classroom Attendance</h1>
+    <span class="subtitle">Admin Dashboard</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="seatmap">Seat Map</button>
+    <button class="tab-btn" data-tab="log">Attendance Log</button>
+    <button class="tab-btn" data-tab="ar-info">AR Integration</button>
+    <button class="tab-btn" data-tab="session">Session Control</button>
+  </nav>
+
+  <main>
+
+    <section id="overview" class="tab-panel active">
+      <h2>Live Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number" id="totalSeats">-</span>
+          <span class="stat-label">Total Seats</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="occupiedSeats">-</span>
+          <span class="stat-label">Occupied</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalStudents">-</span>
+          <span class="stat-label">Total Students</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="sessionStatus">-</span>
+          <span class="stat-label">Session Status</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="seatmap" class="tab-panel">
+      <h2>Interactive Seat Map</h2>
+      <div id="seatGrid" class="seat-grid"></div>
+    </section>
+
+    <section id="log" class="tab-panel">
+      <h2>Attendance Log</h2>
+      <button id="exportCsvBtn">Export CSV</button>
+      <table id="attendanceTable">
+        <thead>
+          <tr><th>Student</th><th>Seat</th><th>Time</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="ar-info" class="tab-panel">
+      <h2>AR Integration</h2>
+      <p>This system uses AR.js and A-Frame to render classroom seating in augmented reality, allowing students to view their assigned seats through their device camera.</p>
+    </section>
+
+    <section id="session" class="tab-panel">
+      <h2>Session Control</h2>
+      <button id="startSessionBtn">Start Session</button>
+      <button id="endSessionBtn">End Session</button>
+      <p id="sessionInfo"></p>
+
+      <h2>Student Check-In QR Code</h2>
+      <div id="qrCodeContainer"></div>
+    </section>
+
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

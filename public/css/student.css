@@ -1,0 +1,56 @@
+/* public/css/student.css */
+
+.student-main {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.checkin-card {
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  max-width: 500px;
+  width: 100%;
+}
+
+.checkin-card h2 {
+  font-size: 16px;
+  margin: 20px 0 10px;
+}
+
+.checkin-card h2:first-child {
+  margin-top: 0;
+}
+
+#studentSelect {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+}
+
+.seat.selected {
+  background: #16a34a !important;
+  color: white;
+  border: 2px solid #15803d;
+}
+
+.seat.taken {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+#checkinBtn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+#checkinMessage {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #16a34a;
+  font-weight: 600;
+}

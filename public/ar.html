@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AR Room View</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+  .overlay {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 999;
+    max-width: 260px;
+  }
+  .overlay .stat {
+    font-size: 20px;
+    font-weight: bold;
+    color: #60a5fa;
+  }
+</style>
+</head>
+<body>
+
+  <div class="overlay">
+    <strong>AR Classroom View</strong><br>
+    <span class="stat" id="occupancyStat">Loading...</span><br>
+    Rotate the view to explore the 3D seating layout.
+  </div>
+
+  <a-scene embedded style="height: 100vh; width: 100vw;">
+    <a-entity id="seatContainer" position="-6 0 -10"></a-entity>
+    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="2 4 2"></a-entity>
+    <a-sky color="#e0f2fe"></a-sky>
+    <a-plane rotation="-90 0 0" width="20" height="20" color="#cbd5e1" position="0 -0.01 -10"></a-plane>
+    <a-entity camera look-controls position="0 3 5"></a-entity>
+  </a-scene>
+
+  <script src="/js/ar.js"></script>
+</body>
+</html>
