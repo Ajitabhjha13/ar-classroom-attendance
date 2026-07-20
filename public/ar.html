@@ -1,47 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>AR Room View</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AR View — ARClass</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 <style>
-  body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-  .overlay {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.75);
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    z-index: 999;
-    max-width: 260px;
-  }
-  .overlay .stat {
-    font-size: 20px;
-    font-weight: bold;
-    color: #60a5fa;
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#e2e8f0;font-family:'Space Grotesk',sans-serif,system-ui;overflow:hidden;height:100vh}
+
+#arCanvas{width:100vw;height:100vh}
+
+/* HUD overlay */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:50}
+.hud-top{position:absolute;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent)}
+.hud-bottom{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);pointer-events:auto}
+.hud-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
+.badge-live{background:rgba(16,185,129,.2);border-color:rgba(16,185,129,.4);color:#4ade80}
+.badge-room{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:#00d4ff}
+.pulse{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:lp 1.5s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:.3}}
+
+.seat-panel{background:rgba(13,21,38,.92);border:1px solid rgba(0,212,255,.25);backdrop-filter:blur(12px);border-radius:14px;padding:18px;display:none}
+.seat-panel.show{display:block}
+.seat-panel-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.seat-panel-sub{font-size:12px;color:#94a3b8;margin-bottom:14px}
+.panel-btns{display:flex;gap:10px}
+.hud-btn{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
+.btn-claim{background:#10b981;color:#fff}
+.btn-cancel{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.stat-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+
+/* Seat Legend */
+.legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8}
+.leg-box{width:12px;height:12px;border-radius:3px}
+
+.back-btn{position:fixed;top:16px;left:16px;z-index:100;pointer-events:auto;padding:8px 14px;border-radius:8px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:13px;font-family:inherit;backdrop-filter:blur(8px)}
+.back-btn:hover{background:rgba(0,0,0,.8)}
+
+/* Success overlay */
+#successOverlay{position:fixed;inset:0;background:rgba(16,185,129,.15);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(4px)}
+#successOverlay.show{display:flex}
+.success-circle{width:100px;height:100px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;font-size:48px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
 </style>
 </head>
 <body>
 
-  <div class="overlay">
-    <strong>AR Classroom View</strong><br>
-    <span class="stat" id="occupancyStat">Loading...</span><br>
-    Rotate the view to explore the 3D seating layout.
+<!-- A-FRAME 3D SCENE -->
+<a-scene id="arCanvas"
+  background="color: #060b17"
+  renderer="antialias: true; colorManagement: true"
+  embedded
+  vr-mode-ui="enabled: false"
+  stats="false">
+
+  <!-- Lighting -->
+  <a-light type="ambient" color="#c8d8ff" intensity="0.5"></a-light>
+  <a-light type="directional" color="#ffffff" intensity="0.8" position="1 2 1"></a-light>
+
+  <!-- Camera -->
+  <a-entity camera look-controls wasd-controls position="0 4 8">
+    <a-cursor color="#00d4ff" fuse="false" raycaster="objects: .clickable" animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"></a-cursor>
+  </a-entity>
+
+  <!-- Floor -->
+  <a-plane rotation="-90 0 0" width="20" height="14" color="#0a0e1a" roughness="0.8" metalness="0.1"></a-plane>
+  <a-grid rotation="-90 0 0" width="20" height="14" color="#1a2235" opacity="0.4"></a-grid>
+
+  <!-- Whiteboard wall -->
+  <a-box position="0 1.5 -5" width="12" height="3" depth="0.1" color="#0f172a" roughness="0.9"></a-box>
+  <a-plane position="0 1.5 -4.94" width="11" height="2.5" color="#1e293b" rotation="0 0 0"></a-plane>
+  <a-text value="WHITEBOARD — CS301 Data Structures" align="center" color="#475569" width="10" position="0 1.5 -4.9" font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"></a-text>
+
+  <!-- Classroom label -->
+  <a-text value="Room 204" align="center" color="#00d4ff" width="6" position="0 3.5 -4.9" font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"></a-text>
+
+  <!-- Seat entities will be injected here -->
+  <a-entity id="seatContainer" position="0 0 0"></a-entity>
+
+</a-scene>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-top">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="hud-badge badge-live"><div class="pulse"></div>Live</div>
+      <div class="hud-badge badge-room">📡 Room 204 · CS301</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div class="hud-badge" style="background:rgba(0,0,0,.5);color:#94a3b8;font-size:11px">Use mouse to rotate · WASD to move</div>
+    </div>
   </div>
+  <div class="hud-bottom">
+    <div class="stat-pills">
+      <div class="hud-badge" style="background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#4ade80"><span id="statAvail">—</span> available</div>
+      <div class="hud-badge" style="background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3);color:#a5b4fc"><span id="statOcc">—</span> occupied</div>
+      <div class="hud-badge" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);color:#fbbf24"><span id="statRes">—</span> reserved</div>
+    </div>
+    <div class="legend-row">
+      <div class="leg-item"><div class="leg-box" style="background:#10b981"></div>Available</div>
+      <div class="leg-item"><div class="leg-box" style="background:#6366f1"></div>Occupied</div>
+      <div class="leg-item"><div class="leg-box" style="background:#d97706"></div>Reserved</div>
+      <div class="leg-item"><div class="leg-box" style="background:#374151"></div>Empty</div>
+    </div>
+    <div class="seat-panel" id="seatPanel">
+      <div class="seat-panel-title">🪑 <span id="panelSeatLabel">—</span></div>
+      <div class="seat-panel-sub" id="panelSeatInfo">Seat info</div>
+      <div class="panel-btns">
+        <button class="hud-btn btn-claim" onclick="claimSelected()">✅ Claim This Seat</button>
+        <button class="hud-btn btn-cancel" onclick="clearSelection()">✕ Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <a-scene embedded style="height: 100vh; width: 100vw;">
-    <a-entity id="seatContainer" position="-6 0 -10"></a-entity>
-    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-    <a-entity light="type: directional; intensity: 0.8" position="2 4 2"></a-entity>
-    <a-sky color="#e0f2fe"></a-sky>
-    <a-plane rotation="-90 0 0" width="20" height="20" color="#cbd5e1" position="0 -0.01 -10"></a-plane>
-    <a-entity camera look-controls position="0 3 5"></a-entity>
-  </a-scene>
+<button class="back-btn" onclick="history.back()">← Back</button>
 
-  <script src="/js/ar.js"></script>
+<div id="successOverlay">
+  <div class="success-circle">✅</div>
+  <div style="font-size:22px;font-weight:700">Attendance Marked!</div>
+  <div style="font-size:14px;color:#94a3b8" id="successInfo">—</div>
+  <button class="hud-btn btn-cancel" style="margin-top:8px;padding:12px 28px" onclick="document.getElementById('successOverlay').classList.remove('show')">Continue →</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const ROOM = new URLSearchParams(location.search).get('room') || 'room204';
+const socket = io({withCredentials:true});
+let currentUser = null;
+let seats = [];
+let selectedSeat = null;
+
+const SEAT_COLORS = {
+  available: '#10b981',
+  occupied:  '#6366f1',
+  reserved:  '#d97706',
+  empty:     '#374151'
+};
+
+const ROWS = ['A','B','C','D','E'];
+const COLS = 8;
+
+async function init(){
+  try{
+    const res = await fetch('/api/auth/me',{credentials:'include'});
+    if(res.ok) currentUser = await res.json();
+  }catch(e){}
+  loadSeats();
+  socket.emit('join-room', ROOM);
+}
+
+async function loadSeats(){
+  try{
+    const res = await fetch(`/api/rooms/${ROOM}/seats`,{credentials:'include'});
+    seats = await res.json();
+  }catch(e){
+    seats = generateFakeSeats();
+  }
+  buildScene(seats);
+  updateStats(seats);
+}
+
+function generateFakeSeats(){
+  const out=[], statuses=['available','occupied','occupied','occupied','reserved','empty'];
+  ROWS.forEach(r=>{
+    for(let c=1;c<=COLS;c++){
+      out.push({id:`${ROOM}-${r}-${c}`,label:`${r}-${String(c).padStart(2,'0')}`,row:r,col:c,
+        status:statuses[Math.floor(Math.random()*statuses.length)],student:null});
+    }
+  });
+  return out;
+}
+
+function buildScene(seats){
+  const container = document.getElementById('seatContainer');
+  container.innerHTML = '';
+
+  // Clear old entities
+  document.querySelectorAll('.seat-entity').forEach(e=>e.remove());
+
+  const rowGap = 1.3, colGap = 1.2;
+  const startX = -(COLS/2)*colGap + colGap/2;
+  const startZ = -3;
+
+  ROWS.forEach((row,ri)=>{
+    const rowSeats = seats.filter(s=>s.row===row).sort((a,b)=>a.col-b.col);
+    rowSeats.forEach((seat,ci)=>{
+      const x = startX + ci*colGap + (ci>=4?0.4:0);
+      const z = startZ + ri*rowGap;
+      const color = seat.studentId===currentUser?.id ? '#00d4ff' : SEAT_COLORS[seat.status]||'#374151';
+      const isMine = seat.studentId===currentUser?.id;
+
+      // Seat base (box)
+      const box = document.createElement('a-box');
+      box.setAttribute('position',`${x} 0.25 ${z}`);
+      box.setAttribute('width','0.9');
+      box.setAttribute('height','0.5');
+      box.setAttribute('depth','0.8');
+      box.setAttribute('color', color);
+      box.setAttribute('opacity', seat.status==='empty'?0.3:0.85);
+      box.setAttribute('roughness','0.4');
+      box.setAttribute('metalness','0.1');
+      box.setAttribute('data-seat-id', seat.id);
+      box.setAttribute('data-seat-label', seat.label);
+      box.setAttribute('data-seat-status', seat.status);
+
+      if(seat.status==='available'&&!isMine){
+        box.classList.add('clickable');
+        box.setAttribute('animation__hover','property: scale; startEvents: mouseenter; easing: easeOutQuad; dur: 100; to: 1.05 1.05 1.05');
+        box.setAttribute('animation__hout','property: scale; startEvents: mouseleave; easing: easeOutQuad; dur: 100; to: 1 1 1');
+        box.addEventListener('click', ()=>selectSeat(seat));
+      }
+
+      // Seat back
+      const back = document.createElement('a-box');
+      back.setAttribute('position',`${x} 0.6 ${z-0.35}`);
+      back.setAttribute('width','0.9');
+      back.setAttribute('height','0.6');
+      back.setAttribute('depth','0.1');
+      back.setAttribute('color', color);
+      back.setAttribute('opacity', seat.status==='empty'?0.2:0.7);
+
+      // Label text
+      const txt = document.createElement('a-text');
+      txt.setAttribute('value', seat.label);
+      txt.setAttribute('align','center');
+      txt.setAttribute('color','#ffffff');
+      txt.setAttribute('width','1.5');
+      txt.setAttribute('position',`${x} 0.55 ${z+0.41}`);
+      txt.setAttribute('rotation','0 0 0');
+      txt.setAttribute('font','https://cdn.aframe.io/fonts/Exo2Bold.fnt');
+
+      // Pulse ring for available
+      if(seat.status==='available'){
+        const ring = document.createElement('a-torus');
+        ring.setAttribute('position',`${x} 0.51 ${z}`);
+        ring.setAttribute('rotation','-90 0 0');
+        ring.setAttribute('radius','0.46');
+        ring.setAttribute('radius-tubular','0.02');
+        ring.setAttribute('color','#10b981');
+        ring.setAttribute('opacity','0.4');
+        ring.setAttribute('animation','property: opacity; from: 0.5; to: 0; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine');
+        container.appendChild(ring);
+      }
+
+      // My seat indicator
+      if(isMine){
+        const beacon = document.createElement('a-cylinder');
+        beacon.setAttribute('position',`${x} 1.2 ${z}`);
+        beacon.setAttribute('radius','0.05');
+        beacon.setAttribute('height','0.8');
+        beacon.setAttribute('color','#00d4ff');
+        beacon.setAttribute('animation','property: position; from: '+x+' 1.1 '+z+'; to: '+x+' 1.4 '+z+'; dir: alternate; loop: true; dur: 800; easing: easeInOutSine');
+        container.appendChild(beacon);
+      }
+
+      container.appendChild(box);
+      container.appendChild(back);
+      container.appendChild(txt);
+    });
+
+    // Row label
+    const rowLabel = document.createElement('a-text');
+    rowLabel.setAttribute('value', row);
+    rowLabel.setAttribute('align','center');
+    rowLabel.setAttribute('color','#475569');
+    rowLabel.setAttribute('width','2');
+    rowLabel.setAttribute('position',`${startX-1.2} 0.5 ${startZ+ri*rowGap}`);
+    container.appendChild(rowLabel);
+  });
+
+  // Column numbers
+  for(let c=0;c<COLS;c++){
+    const colLabel = document.createElement('a-text');
+    colLabel.setAttribute('value', String(c+1));
+    colLabel.setAttribute('align','center');
+    colLabel.setAttribute('color','#1e3a4c');
+    colLabel.setAttribute('width','1');
+    colLabel.setAttribute('position',`${startX+c*colGap+(c>=4?0.4:0)} 0 ${startZ-1}`);
+    colLabel.setAttribute('rotation','-90 0 0');
+    container.appendChild(colLabel);
+  }
+}
+
+function selectSeat(seat){
+  selectedSeat = seat;
+  document.getElementById('panelSeatLabel').textContent = seat.label;
+  document.getElementById('panelSeatInfo').textContent = `Row ${seat.row} · Col ${seat.col} · Available`;
+  document.getElementById('seatPanel').classList.add('show');
+}
+function clearSelection(){selectedSeat=null;document.getElementById('seatPanel').classList.remove('show');}
+
+function claimSelected(){
+  if(!selectedSeat) return;
+  socket.emit('claim-seat',{roomId:ROOM,seatId:selectedSeat.id,method:'AR'});
+  clearSelection();
+}
+
+socket.on('seat-claimed',({seat})=>{
+  document.getElementById('successInfo').textContent=`Seat ${seat.label} · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('successOverlay').classList.add('show');
+  loadSeats();
+});
+socket.on('seat-error',({msg})=>alert(msg));
+socket.on('seats-state',s=>{seats=s;buildScene(s);updateStats(s);});
+
+function updateStats(seats){
+  document.getElementById('statAvail').textContent = seats.filter(s=>s.status==='available').length;
+  document.getElementById('statOcc').textContent = seats.filter(s=>s.status==='occupied').length;
+  document.getElementById('statRes').textContent = seats.filter(s=>s.status==='reserved').length;
+}
+
+init();
+</script>
 </body>
 </html>

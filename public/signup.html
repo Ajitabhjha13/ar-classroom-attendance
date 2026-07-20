@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign Up — ARClass</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="stylesheet" href="/style.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;
+  background:var(--bg);background-image:radial-gradient(ellipse 700px 500px at 50% 50%,rgba(16,185,129,.08),transparent)}
+.auth-box{width:100%;max-width:440px}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo .icon{width:52px;height:52px;background:linear-gradient(135deg,var(--acc3),var(--acc));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px}
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.role-card{padding:16px;background:var(--bg3);border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .2s}
+.role-card.selected{border-color:var(--acc);background:rgba(0,212,255,.06)}
+.role-card .emoji{font-size:24px;margin-bottom:6px}
+.role-card .name{font-size:13px;font-weight:700}
+.role-card .desc{font-size:11px;color:var(--text2);margin-top:3px}
+.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-bottom:14px;display:none}
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px}
+#rollField{display:none}
+</style>
+</head>
+<body>
+<div class="auth-box">
+  <div class="auth-logo">
+    <div class="icon">🎓</div>
+    <h1 style="font-size:22px;font-weight:800">Create Account</h1>
+    <p style="font-size:13px;color:var(--text2);margin-top:4px">ARClass — Zenith Institute of Technology</p>
+  </div>
+  <div class="auth-card">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">I am a</p>
+    <div class="role-pick">
+      <div class="role-card selected" id="roleF" onclick="pickRole('faculty')">
+        <div class="emoji">👨‍🏫</div><div class="name">Faculty</div><div class="desc">Manage rooms & attendance</div>
+      </div>
+      <div class="role-card" id="roleS" onclick="pickRole('student')">
+        <div class="emoji">👨‍🎓</div><div class="name">Student</div><div class="desc">View seats & check in</div>
+      </div>
+    </div>
+    <div class="err" id="errMsg"></div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Ajitabh Jha" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@university.edu" autocomplete="off">
+    </div>
+    <div class="form-group" id="rollField">
+      <label>Roll Number</label>
+      <input type="text" id="rollNo" placeholder="CS21001" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Min 6 characters" autocomplete="off">
+    </div>
+    <button class="btn btn-success w100" id="signupBtn" onclick="doSignup()">Create Account</button>
+    <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
+      Already have an account? <a href="/login" style="color:var(--acc)">Sign in</a>
+    </p>
+  </div>
+</div>
+<div class="toast-container" id="toasts"></div>
+<script>
+let role='faculty';
+function pickRole(r){
+  role=r;
+  document.getElementById('roleF').classList.toggle('selected',r==='faculty');
+  document.getElementById('roleS').classList.toggle('selected',r==='student');
+  document.getElementById('rollField').style.display=r==='student'?'block':'none';
+}
+async function doSignup(){
+  const btn=document.getElementById('signupBtn');
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const rollNo=document.getElementById('rollNo').value.trim();
+  if(!name||!email||!password){showErr('Please fill in all fields');return;}
+  if(password.length<6){showErr('Password must be at least 6 characters');return;}
+  btn.disabled=true;btn.textContent='Creating…';
+  try{
+    const res=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password,role,rollNo}),credentials:'include'});
+    const data=await res.json();
+    if(!res.ok){showErr(data.error||'Signup failed');btn.disabled=false;btn.textContent='Create Account';return;}
+    showToast('✅ Account created!','success');
+    setTimeout(()=>window.location=role==='faculty'?'/dashboard':'/student',600);
+  }catch(e){showErr('Server error');btn.disabled=false;btn.textContent='Create Account';}
+}
+function showErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block';}
+function showToast(msg,type=''){
+  const t=document.createElement('div');t.className=`toast toast-${type}`;
+  t.innerHTML=`<span>${msg}</span>`;document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+</body>
+</html>

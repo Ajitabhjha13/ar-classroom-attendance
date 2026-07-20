@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Faculty Login - AR Classroom Attendance</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/auth.css">
+<link rel="stylesheet" href="/css/toast.css">
+</head>
+<body>
+
+  <div class="auth-page">
+    <div class="auth-card">
+      <h1 class="auth-title">🎓 Faculty Login</h1>
+      <p class="auth-subtitle">Access the admin dashboard</p>
+
+      <form id="loginForm">
+        <label>Username</label>
+        <input type="text" id="username" required placeholder="Your username" autocomplete="off">
+
+        <label>Password</label>
+        <input type="password" id="password" required placeholder="Your password">
+
+        <button type="submit">Log In</button>
+      </form>
+
+      <p class="auth-switch">Don't have an account? <a href="/faculty-signup">Sign up</a></p>
+    </div>
+  </div>
+
+  <script src="/js/toast.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role: 'faculty' })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = '/dashboard', 1000);
+      } else {
+        showToast(data.error || 'Login failed', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

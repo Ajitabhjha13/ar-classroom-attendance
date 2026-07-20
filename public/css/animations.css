@@ -1,0 +1,75 @@
+/* public/css/animations.css */
+
+/* Tab panel fade-in */
+.tab-panel {
+  display: none;
+  animation: fadeInUp 0.35s ease;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tab button smooth transitions */
+.tab-btn {
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+/* Stat cards */
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Seat tiles */
+.seat {
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.seat:hover:not(.occupied):not(.taken) {
+  transform: scale(1.06);
+}
+
+.seat.selected {
+  animation: seatPop 0.25s ease;
+}
+
+@keyframes seatPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Buttons */
+button {
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* Table rows */
+#attendanceTable tbody tr {
+  animation: fadeInRow 0.3s ease;
+}
+
+@keyframes fadeInRow {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

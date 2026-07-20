@@ -2,31 +2,29 @@
 
 const socket = io();
 
-let selectedStudentId = null;
+let currentUser = null;
 let selectedSeatId = null;
 
-// ----- LOAD STUDENTS INTO DROPDOWN -----
-async function loadStudents() {
-  const students = await (await fetch('/api/students')).json();
-  const select = document.getElementById('studentSelect');
+// ----- CHECK LOGIN AND GET CURRENT USER -----
+async function loadCurrentUser() {
+  const res = await fetch('/auth/me');
+  const data = await res.json();
 
-  students.forEach(student => {
-    const option = document.createElement('option');
-    option.value = student.id;
-    option.textContent = `${student.name} (Roll No: ${student.rollNo})`;
-    select.appendChild(option);
-  });
+  if (!data.loggedIn) {
+    window.location.href = '/student-login';
+    return;
+  }
+
+  currentUser = data.user;
+  document.getElementById('welcomeMessage').textContent = `Welcome, ${currentUser.name}!`;
 }
-
-document.getElementById('studentSelect').addEventListener('change', (e) => {
-  selectedStudentId = e.target.value || null;
-  updateCheckinButton();
-});
 
 // ----- LOAD SEAT MAP FOR SELECTION -----
 async function loadSeatMap() {
-  const seats = await (await fetch('/api/seats')).json();
   const grid = document.getElementById('studentSeatGrid');
+  grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+
+  const seats = await (await fetch('/api/seats')).json();
   grid.innerHTML = '';
 
   seats.forEach(seat => {
@@ -47,9 +45,9 @@ async function loadSeatMap() {
   });
 }
 
-// ----- ENABLE CHECK-IN BUTTON ONLY WHEN BOTH ARE SELECTED -----
+// ----- ENABLE CHECK-IN BUTTON ONLY WHEN SEAT IS SELECTED -----
 function updateCheckinButton() {
-  document.getElementById('checkinBtn').disabled = !(selectedStudentId && selectedSeatId);
+  document.getElementById('checkinBtn').disabled = !selectedSeatId;
 }
 
 // ----- HANDLE CHECK-IN -----
@@ -57,19 +55,24 @@ document.getElementById('checkinBtn').addEventListener('click', async () => {
   const res = await fetch('/api/attendance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ studentId: selectedStudentId, seatId: selectedSeatId })
+    body: JSON.stringify({ studentId: currentUser.id, seatId: selectedSeatId })
   });
 
   const data = await res.json();
 
   if (data.success) {
-    document.getElementById('checkinMessage').textContent =
-      `Checked in successfully to seat ${selectedSeatId}!`;
+    showToast(`Checked in successfully to seat ${selectedSeatId}!`, 'success');
     document.getElementById('checkinBtn').disabled = true;
     loadSeatMap();
   } else {
-    document.getElementById('checkinMessage').textContent = data.error || 'Check-in failed.';
+    showToast(data.error || 'Check-in failed.', 'error');
   }
+});
+
+// ----- LOGOUT -----
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/auth/logout', { method: 'POST' });
+  window.location.href = '/student-login';
 });
 
 // ----- LIVE UPDATES -----
@@ -78,5 +81,5 @@ socket.on('attendanceUpdate', () => {
 });
 
 // ----- INITIAL LOAD -----
-loadStudents();
+loadCurrentUser();
 loadSeatMap();

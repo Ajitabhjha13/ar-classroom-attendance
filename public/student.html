@@ -1,36 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Student Check-In</title>
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/student.css">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Portal — ARClass</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="stylesheet" href="/style.css">
+<style>
+.student-wrap{max-width:800px;margin:0 auto;padding:24px}
+.room-selector{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.room-btn{padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;font-family:var(--font)}
+.room-btn.active{border-color:var(--acc);background:rgba(0,212,255,.08);color:var(--acc)}
+.seat-grid-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.board-label{background:var(--bg3);border:1px solid var(--border);border-radius:6px;text-align:center;padding:8px;font-size:11px;color:var(--text3);margin-bottom:14px;letter-spacing:1.5px}
+.seat-rows{display:flex;flex-direction:column;gap:6px}
+.seat-row-s{display:flex;align-items:center;gap:6px}
+.seat-s{width:48px;height:44px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .2s;font-family:var(--mono);flex-shrink:0;position:relative}
+.seat-s:hover{transform:scale(1.1);z-index:2}
+.seat-s.available{background:#0d2e1e;border-color:#065f46;color:#4ade80}
+.seat-s.available:hover{background:#0f3d26;border-color:var(--acc3);box-shadow:0 0 10px rgba(16,185,129,.3)}
+.seat-s.occupied{background:#1e1b4b;border-color:#4338ca;color:#a5b4fc;cursor:default}
+.seat-s.reserved{background:#1f1100;border-color:#78350f;color:#fbbf24;cursor:default}
+.seat-s.empty{background:var(--bg3);border-color:var(--border);color:var(--text3);cursor:default}
+.seat-s.selected{box-shadow:0 0 0 3px var(--acc);border-color:var(--acc)}
+.seat-s.mine{background:#0c2a2a;border-color:var(--acc);color:var(--acc);animation:minePulse 2s ease-in-out infinite}
+@keyframes minePulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4)}50%{box-shadow:0 0 0 6px rgba(0,212,255,0)}}
+.row-lbl-s{width:20px;font-size:10px;color:var(--text3);font-family:var(--mono);text-align:center;flex-shrink:0}
+.aisle-gap{width:16px;flex-shrink:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-box{width:12px;height:12px;border-radius:3px}
+
+.confirm-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-end;justify-content:center;padding:20px}
+.confirm-modal.open{display:flex}
+.confirm-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:28px;width:100%;max-width:460px}
+@media(min-height:600px){.confirm-modal{align-items:center}.confirm-sheet{border-radius:16px}}
+.seat-preview{width:80px;height:72px;border-radius:10px;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;font-family:var(--mono);color:var(--acc);margin:0 auto 16px;background:rgba(0,212,255,.06)}
+
+.checkin-success{background:var(--bg2);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:24px;text-align:center;display:none}
+.success-icon{font-size:48px;margin-bottom:12px}
+.ar-btn{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(0,212,255,.06);border:1px solid var(--border2);border-radius:10px;cursor:pointer;transition:all .2s;width:100%}
+.ar-btn:hover{background:rgba(0,212,255,.1);border-color:var(--acc)}
+</style>
 </head>
 <body>
+<nav class="top-nav">
+  <div class="nav-logo"><div class="nav-logo-icon">📡</div>ARClass</div>
+  <div class="nav-right">
+    <span class="live-dot"></span>
+    <div class="user-chip" id="userChip">👤 Student</div>
+    <a href="/" class="btn btn-ghost btn-sm">Home</a>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
 
-  <header class="topbar">
-    <h1>AR Classroom Attendance</h1>
-    <span class="subtitle">Student Check-In</span>
-  </header>
+<div class="student-wrap">
+  <div class="page-header">
+    <div class="page-title">🎓 Student Portal</div>
+    <button class="btn btn-primary btn-sm" onclick="window.location='/ar?room=room204'">📱 Open AR View</button>
+  </div>
 
-  <main class="student-main">
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-num c-green" id="myAtt">—</div><div class="stat-lbl">My Attendance %</div></div>
+    <div class="stat-card"><div class="stat-num c-blue" id="myClasses">—</div><div class="stat-lbl">Classes Attended</div></div>
+  </div>
 
-    <div class="checkin-card">
-      <h2>Select Your Name</h2>
-      <select id="studentSelect">
-        <option value="">-- Choose your name --</option>
-      </select>
+  <div class="checkin-success" id="checkinSuccess">
+    <div class="success-icon">✅</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">Attendance Marked!</div>
+    <div style="font-size:13px;color:var(--text2)" id="successMsg">You're checked in for today.</div>
+    <div id="mySeatBadge" style="margin-top:12px"></div>
+  </div>
 
-      <h2>Select Your Seat</h2>
-      <div id="studentSeatGrid" class="seat-grid"></div>
-
-      <button id="checkinBtn" disabled>Check In</button>
-      <p id="checkinMessage"></p>
+  <div id="mainContent">
+    <div class="seat-grid-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:700" id="roomTitle">Room 204 — CS301</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="loadSeats()">🔄</button>
+          <button class="btn btn-sm btn-outline" onclick="window.location='/ar?room=room204'">📱 AR Mode</button>
+        </div>
+      </div>
+      <div class="board-label">◀ ——— WHITEBOARD ——— ▶</div>
+      <div class="legend">
+        <div class="leg"><div class="leg-box" style="background:#0d2e1e;border:1px solid #065f46"></div>Available — tap to claim</div>
+        <div class="leg"><div class="leg-box" style="background:#1e1b4b;border:1px solid #4338ca"></div>Occupied</div>
+        <div class="leg"><div class="leg-box" style="background:rgba(0,212,255,.1);border:1px solid var(--acc)"></div>Your seat</div>
+      </div>
+      <div class="seat-rows" id="seatGrid"><p style="color:var(--text3);font-size:13px">Loading seat map…</p></div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text2)">
+        <span id="seatCount">—</span> · Tap an available seat to check in
+      </div>
     </div>
 
-  </main>
+    <div class="card">
+      <div class="sec-title">📱 AR Experience</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">For the full AR experience, scan the QR code on the classroom door with your phone camera.</p>
+      <button class="ar-btn" onclick="window.location='/ar?room=room204'">
+        <span style="font-size:24px">📡</span>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:700">Launch AR Camera View</div>
+          <div style="font-size:11px;color:var(--text2)">See the seat map overlaid on your camera feed</div>
+        </div>
+        <span style="margin-left:auto;color:var(--acc)">→</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/student.js"></script>
+<!-- CONFIRM MODAL -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-sheet">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">Claim this seat?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Your attendance will be marked immediately.</p>
+    <div class="seat-preview" id="seatPreview">A-01</div>
+    <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:18px">Room 204 · CS301 · <span id="claimTime"></span></div>
+    <div class="grid-2" style="gap:10px">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-success" id="confirmBtn" onclick="confirmClaim()">✅ Confirm Check-in</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io({withCredentials:true});
+let currentUser = null;
+let allSeats = [];
+let pendingClaimId = null;
+const ROOM = new URLSearchParams(location.search).get('room') || 'room204';
+
+async function init(){
+  try{
+    const res = await fetch('/api/auth/me',{credentials:'include'});
+    if(!res.ok){window.location='/login';return;}
+    currentUser = await res.json();
+    document.getElementById('userChip').textContent = '👤 '+currentUser.name;
+    document.getElementById('myAtt').textContent = '91%';
+    document.getElementById('myClasses').textContent = '22';
+    loadSeats();
+    socket.emit('join-room', ROOM);
+  }catch(e){window.location='/login';}
+}
+
+async function loadSeats(){
+  try{
+    const res = await fetch(`/api/rooms/${ROOM}/seats`,{credentials:'include'});
+    allSeats = await res.json();
+    renderSeats(allSeats);
+  }catch(e){showToast('Could not load seats','error');}
+}
+
+function renderSeats(seats){
+  const grid = document.getElementById('seatGrid');
+  if(!grid) return;
+  const rows = [...new Set(seats.map(s=>s.row))].sort();
+  let avail=0, occ=0;
+  grid.innerHTML = rows.map(r=>{
+    const rowSeats = seats.filter(s=>s.row===r).sort((a,b)=>a.col-b.col);
+    return `<div class="seat-row-s">
+      <div class="row-lbl-s">${r}</div>
+      ${rowSeats.map((s,i)=>{
+        if(s.status==='available') avail++;
+        if(s.status==='occupied') occ++;
+        const isMine = s.studentId===currentUser?.id;
+        const cls = isMine?'mine':s.status;
+        const click = s.status==='available'&&!isMine?`onclick="tryClaim('${s.id}','${s.label}')"`:isMine?`onclick="showToast('This is your seat! ✅','success')"`:s.status==='occupied'?`onclick="showToast('${s.student||'Someone'} is sitting here','')"`:'';
+        return `${i===4?'<div class="aisle-gap"></div>':''}<div class="seat-s ${cls}" title="${isMine?'Your seat':s.student||s.label}" ${click}>${s.label}</div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+  document.getElementById('seatCount').textContent = `${avail} available · ${occ} occupied`;
+}
+
+function tryClaim(seatId, label){
+  pendingClaimId = seatId;
+  document.getElementById('seatPreview').textContent = label;
+  document.getElementById('claimTime').textContent = new Date().toLocaleTimeString();
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('open');pendingClaimId=null;}
+
+function confirmClaim(){
+  if(!pendingClaimId) return;
+  const btn = document.getElementById('confirmBtn');
+  btn.disabled=true;btn.textContent='Checking in…';
+  socket.emit('claim-seat',{roomId:ROOM,seatId:pendingClaimId,method:'QR'});
+  closeConfirm();
+  setTimeout(()=>{btn.disabled=false;btn.textContent='✅ Confirm Check-in';},3000);
+}
+
+socket.on('seat-claimed',({seat,msg})=>{
+  showToast(msg,'success');
+  document.getElementById('checkinSuccess').style.display='block';
+  document.getElementById('successMsg').textContent=`Seat ${seat.label} · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('mySeatBadge').innerHTML=`<span class="badge badge-green" style="font-size:13px;padding:6px 14px">🪑 Seat ${seat.label}</span>`;
+  loadSeats();
+});
+socket.on('seat-error',({msg})=>showToast(msg,'error'));
+socket.on('seats-state',seats=>{allSeats=seats;renderSeats(seats);});
+
+function showToast(msg,type=''){
+  const t=document.createElement('div');t.className=`toast toast-${type}`;
+  t.innerHTML=`<span class="toast-icon">${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+async function logout(){await fetch('/api/auth/logout',{method:'POST',credentials:'include'});window.location='/login';}
+init();
+</script>
 </body>
 </html>

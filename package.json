@@ -1,22 +1,21 @@
 {
   "name": "ar-classroom-attendance",
-  "version": "1.0.0",
-  "description": "AR-based classroom seating and attendance system",
+  "version": "2.0.0",
+  "description": "AR-based Classroom Seating & Attendance System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "qrcode": "^1.5.4",
-    "socket.io": "^4.8.1"
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.17.3",
+    "qrcode": "^1.5.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.0.1"
   }
 }

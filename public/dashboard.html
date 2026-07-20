@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — ARClass Faculty</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="stylesheet" href="/style.css">
+<style>
+.sidebar{position:fixed;left:0;top:56px;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;z-index:50}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;border:none;background:none;width:100%;font-family:var(--font)}
+.sidebar-item:hover,.sidebar-item.active{background:rgba(0,212,255,.06);color:var(--acc)}
+.sidebar-item.active{border-right:2px solid var(--acc)}
+.sidebar-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-section{padding:8px 20px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-top:8px}
+.main{margin-left:220px;padding:24px}
+.view{display:none}
+.view.active{display:block}
+
+/* SEAT MAP */
+.seat-map-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+.board-label{background:var(--bg3);border:1px solid var(--border);border-radius:6px;text-align:center;padding:8px;font-size:11px;color:var(--text3);margin-bottom:14px;letter-spacing:1.5px}
+.seat-rows{display:flex;flex-direction:column;gap:6px}
+.seat-row{display:flex;align-items:center;gap:6px}
+.row-lbl{width:18px;font-size:10px;color:var(--text3);font-family:var(--mono);text-align:center;flex-shrink:0}
+.seat{width:44px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:var(--mono);flex-shrink:0}
+.seat:hover{transform:scale(1.08);z-index:2;position:relative}
+.seat.available{background:#0d2e1e;border-color:#065f46;color:#4ade80}
+.seat.occupied{background:#1e1b4b;border-color:#4338ca;color:#a5b4fc}
+.seat.reserved{background:#1f1100;border-color:#78350f;color:#fbbf24}
+.seat.empty{background:var(--bg3);border-color:var(--border);color:var(--text3)}
+.seat.selected{box-shadow:0 0 0 2px var(--acc)}
+.aisle-gap{width:16px;flex-shrink:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-box{width:12px;height:12px;border-radius:3px}
+
+/* SEAT DETAIL PANEL */
+.seat-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;position:sticky;top:80px}
+
+/* ATTENDANCE TABLE */
+.att-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+
+/* QR modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;display:none}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:360px;width:90%;text-align:center}
+.qr-img{width:200px;height:200px;margin:16px auto;border-radius:10px;background:#fff;padding:8px}
+.qr-img img{width:100%;height:100%}
+.qr-url{font-size:11px;font-family:var(--mono);color:var(--text3);word-break:break-all;padding:8px;background:var(--bg3);border-radius:6px;margin:10px 0}
+
+/* CHART BAR */
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:120px;padding:0 4px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar-fill{border-radius:4px 4px 0 0;width:100%;min-height:4px;transition:height .6s}
+.bar-lbl{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.bar-val{font-size:9px;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-logo"><div class="nav-logo-icon">📡</div>ARClass</div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showView('overview')">Overview</button>
+    <button class="nav-link" onclick="showView('seatmap')">Seat Map</button>
+    <button class="nav-link" onclick="showView('attendance')">Attendance</button>
+    <button class="nav-link" onclick="showView('rooms')">Rooms</button>
+  </div>
+  <div class="nav-right">
+    <span class="live-dot"></span>
+    <div class="user-chip" id="userChip">👤 Faculty</div>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="sidebar">
+  <div class="sidebar-section">Navigation</div>
+  <button class="sidebar-item active" onclick="showView('overview',this)"><span class="icon">🏠</span>Overview</button>
+  <button class="sidebar-item" onclick="showView('seatmap',this)"><span class="icon">🪑</span>Seat Map</button>
+  <button class="sidebar-item" onclick="showView('attendance',this)"><span class="icon">✅</span>Attendance</button>
+  <button class="sidebar-item" onclick="showView('rooms',this)"><span class="icon">🏫</span>Rooms</button>
+  <div class="sidebar-section">Tools</div>
+  <button class="sidebar-item" onclick="openQR()"><span class="icon">🔲</span>QR Generator</button>
+  <button class="sidebar-item" onclick="exportCSV()"><span class="icon">📥</span>Export CSV</button>
+  <button class="sidebar-item" onclick="window.open('/ar?room=room204','_blank')"><span class="icon">📱</span>AR Preview</button>
+  <div class="sidebar-section">Settings</div>
+  <button class="sidebar-item" onclick="logout()"><span class="icon">🚪</span>Logout</button>
+</div>
+
+<div class="main">
+
+<!-- OVERVIEW VIEW -->
+<div class="view active" id="view-overview">
+  <div class="page-header">
+    <div class="page-title">🏠 Faculty Dashboard</div>
+    <div class="action-row">
+      <button class="btn btn-primary btn-sm" onclick="openQR()">🔲 Get QR Code</button>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+    </div>
+  </div>
+
+  <div class="grid-4" id="statsGrid">
+    <div class="stat-card"><div class="stat-icon">🏫</div><div class="stat-num c-blue" id="statRooms">—</div><div class="stat-lbl">Active Rooms</div></div>
+    <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-num c-green" id="statStudents">—</div><div class="stat-lbl">Students Today</div></div>
+    <div class="stat-card"><div class="stat-icon">📷</div><div class="stat-num c-purple" id="statQR">—</div><div class="stat-lbl">QR Scans</div></div>
+    <div class="stat-card"><div class="stat-icon">🤖</div><div class="stat-num c-amber" id="statFace">—</div><div class="stat-lbl">Face Detections</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card">
+      <div class="sec-title">📊 Weekly Attendance</div>
+      <div class="bar-chart" id="weekChart"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:10px;color:var(--text3)">Mon</span><span style="font-size:10px;color:var(--text3)">Tue</span><span style="font-size:10px;color:var(--text3)">Wed</span><span style="font-size:10px;color:var(--text3)">Thu</span><span style="font-size:10px;color:var(--text3)">Fri</span><span style="font-size:10px;color:var(--text3)">Sat</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">🏫 Room Status</div>
+      <div id="roomStatusList">Loading…</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:18px">
+    <div class="card">
+      <div class="sec-title">⚠️ Low Attendance Alerts</div>
+      <div id="alertsList"></div>
+    </div>
+    <div class="card">
+      <div class="sec-title">🕐 Recent Check-ins</div>
+      <div id="recentList">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEAT MAP VIEW -->
+<div class="view" id="view-seatmap">
+  <div class="page-header">
+    <div class="page-title">🪑 Room 204 — Live Seat Map</div>
+    <div class="action-row">
+      <button class="btn btn-sm btn-outline" onclick="loadSeats()">🔄 Refresh</button>
+      <button class="btn btn-sm btn-success" onclick="markAllPresent()">✅ Mark All Present</button>
+      <button class="btn btn-sm btn-primary" onclick="openQR()">🔲 QR Code</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="seat-map-wrap">
+        <div class="board-label">◀ ——— WHITEBOARD ——— ▶</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-box" style="background:#0d2e1e;border:1px solid #065f46"></div>Available</div>
+          <div class="leg"><div class="leg-box" style="background:#1e1b4b;border:1px solid #4338ca"></div>Occupied</div>
+          <div class="leg"><div class="leg-box" style="background:#1f1100;border:1px solid #78350f"></div>Reserved</div>
+          <div class="leg"><div class="leg-box" style="background:var(--bg3)"></div>Empty/Broken</div>
+        </div>
+        <div class="seat-rows" id="seatGrid">Loading seats…</div>
+        <div style="margin-top:14px;display:flex;justify-content:space-between;font-size:12px;color:var(--text2)">
+          <span id="occCount">—</span>
+          <span id="avCount">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="seat-panel" id="seatPanel">
+      <div class="sec-title">📍 Seat Details</div>
+      <p style="font-size:13px;color:var(--text2)">Click any seat to view details and manage occupancy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ATTENDANCE VIEW -->
+<div class="view" id="view-attendance">
+  <div class="page-header">
+    <div class="page-title">✅ Attendance — Room 204</div>
+    <div class="action-row">
+      <input placeholder="Search student…" id="searchInput" style="width:200px;padding:7px 12px;font-size:12px" oninput="filterTable(this.value)">
+      <button class="btn btn-sm btn-outline" onclick="exportCSV()">📥 CSV Export</button>
+      <button class="btn btn-sm btn-purple" onclick="sendReport()">📧 Send Report</button>
+    </div>
+  </div>
+  <div class="grid-4" style="margin-bottom:18px">
+    <div class="stat-card"><div class="stat-num c-green" id="attPresent">—</div><div class="stat-lbl">Present</div></div>
+    <div class="stat-card"><div class="stat-num c-amber" id="attLate">0</div><div class="stat-lbl">Late</div></div>
+    <div class="stat-card"><div class="stat-num c-red" id="attAbsent">—</div><div class="stat-lbl">Absent</div></div>
+    <div class="stat-card"><div class="stat-num c-blue" id="attPct">—</div><div class="stat-lbl">% Rate</div></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Student</th><th>Roll No</th><th>Seat</th><th>Status</th><th>Time</th><th>Method</th><th>Action</th></tr>
+      </thead>
+      <tbody id="attBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ROOMS VIEW -->
+<div class="view" id="view-rooms">
+  <div class="page-header">
+    <div class="page-title">🏫 Manage Rooms</div>
+    <button class="btn btn-primary btn-sm" onclick="showAddRoom()">+ Add Room</button>
+  </div>
+  <div id="addRoomForm" style="display:none;margin-bottom:18px">
+    <div class="card">
+      <div class="sec-title">Add New Room</div>
+      <div class="grid-2">
+        <div class="form-group"><label>Room Name</label><input id="rName" placeholder="Room 205" autocomplete="off"></div>
+        <div class="form-group"><label>Building</label><input id="rBuilding" placeholder="CS Block" autocomplete="off"></div>
+        <div class="form-group"><label>Subject</label><input id="rSubject" placeholder="CS302 - Algorithms" autocomplete="off"></div>
+        <div class="form-group"><label>Rows × Cols</label><div style="display:flex;gap:8px"><input id="rRows" type="number" value="5" min="1" max="10" style="width:80px"><input id="rCols" type="number" value="8" min="1" max="12" style="width:80px"></div></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-success btn-sm" onclick="addRoom()">Save Room</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('addRoomForm').style.display='none'">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="roomsList" class="grid-2">Loading…</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- QR MODAL -->
+<div class="modal-bg" id="qrModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700">Room 204 QR Code</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeQR()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:4px">Print and place on the classroom door.</p>
+    <div class="qr-img" id="qrImgWrap"><p style="font-size:12px;color:#999;padding:60px 0">Generating…</p></div>
+    <div class="qr-url" id="qrUrl">—</div>
+    <div class="action-row" style="justify-content:center">
+      <button class="btn btn-primary btn-sm" onclick="printQR()">🖨️ Print</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyUrl()">📋 Copy URL</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io({withCredentials:true});
+let currentUser = null;
+let allSeats = [];
+let allAttendance = [];
+
+// AUTH CHECK
+async function init() {
+  try {
+    const res = await fetch('/api/auth/me', {credentials:'include'});
+    if (!res.ok) { window.location='/login'; return; }
+    currentUser = await res.json();
+    if (currentUser.role !== 'faculty') { window.location='/student'; return; }
+    document.getElementById('userChip').textContent = '👤 ' + currentUser.name;
+    loadStats();
+    loadRooms();
+    loadRecentAttendance();
+    renderWeekChart();
+    renderAlerts();
+  } catch(e) { window.location='/login'; }
+}
+
+// VIEWS
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+id)?.classList.add('active');
+  if(btn){btn.classList.add('active');}
+  if(id==='seatmap') loadSeats();
+  if(id==='attendance') loadAttendance();
+  if(id==='rooms') renderRoomsList();
+}
+
+// STATS
+async function loadStats() {
+  try {
+    const res = await fetch('/api/dashboard/stats',{credentials:'include'});
+    const d = await res.json();
+    document.getElementById('statRooms').textContent = d.activeRooms;
+    document.getElementById('statStudents').textContent = d.studentsToday;
+    document.getElementById('statQR').textContent = d.qrScans;
+    document.getElementById('statFace').textContent = d.faceDetections;
+  } catch(e){}
+}
+
+// SEAT MAP
+async function loadSeats() {
+  try {
+    const res = await fetch('/api/rooms/room204/seats',{credentials:'include'});
+    allSeats = await res.json();
+    renderSeatGrid(allSeats);
+  } catch(e){showToast('Failed to load seats','error');}
+}
+
+function renderSeatGrid(seats) {
+  const grid = document.getElementById('seatGrid');
+  if(!grid) return;
+  const rows = [...new Set(seats.map(s=>s.row))].sort();
+  let occupied=0, available=0;
+  grid.innerHTML = rows.map(r=>{
+    const rowSeats = seats.filter(s=>s.row===r).sort((a,b)=>a.col-b.col);
+    rowSeats.forEach(s=>{if(s.status==='occupied')occupied++;if(s.status==='available')available++;});
+    return `<div class="seat-row">
+      <div class="row-lbl">${r}</div>
+      ${rowSeats.map((s,i)=>
+        `${i===4?'<div class="aisle-gap"></div>':''}<div class="seat ${s.status}" title="${s.student||s.label}" onclick="selectSeat('${s.id}')">${s.label}</div>`
+      ).join('')}
+    </div>`;
+  }).join('');
+  const el=document.getElementById('occCount'),av=document.getElementById('avCount');
+  if(el) el.textContent=`${occupied} occupied`;
+  if(av) av.textContent=`${available} available`;
+}
+
+function selectSeat(seatId) {
+  const seat = allSeats.find(s=>s.id===seatId);
+  if(!seat) return;
+  document.querySelectorAll('.seat').forEach(el=>el.classList.remove('selected'));
+  event.target.classList.add('selected');
+  const statusColors = {available:'var(--acc3)',occupied:'#a5b4fc',reserved:'var(--warn)',empty:'var(--text3)'};
+  const panel = document.getElementById('seatPanel');
+  panel.innerHTML = `
+    <div class="sec-title">📍 ${seat.label}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:48px;height:44px;border-radius:8px;background:${statusColors[seat.status]}18;border:1px solid ${statusColors[seat.status]}44;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${statusColors[seat.status]};font-family:var(--mono)">${seat.label}</div>
+      <div><span class="badge badge-${seat.status==='occupied'?'purple':seat.status==='available'?'green':seat.status==='reserved'?'amber':'gray'}">${seat.status}</span></div>
+    </div>
+    ${seat.student?`
+      <div style="font-size:12px;margin-bottom:8px"><span style="color:var(--text2)">Student:</span> <strong>${seat.student}</strong></div>
+      <div style="font-size:12px;margin-bottom:8px"><span style="color:var(--text2)">Checked in:</span> <strong style="color:var(--acc3)">${seat.checkedInAt?new Date(seat.checkedInAt).toLocaleTimeString():'-'}</strong></div>
+      <div style="font-size:12px;margin-bottom:14px"><span style="color:var(--text2)">Method:</span> <span class="badge badge-blue">${seat.method||'Manual'}</span></div>
+    `:`<p style="font-size:12px;color:var(--text3);margin-bottom:14px">No student assigned</p>`}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${seat.status!=='occupied'?`<button class="btn btn-success btn-sm" onclick="claimSeatFaculty('${seat.id}')">✅ Mark Present</button>`:''}
+      ${seat.status==='occupied'?`<button class="btn btn-ghost btn-sm" onclick="releaseSeat('${seat.id}')">🚫 Release Seat</button>`:''}
+    </div>
+  `;
+}
+
+async function releaseSeat(seatId) {
+  await fetch(`/api/rooms/room204/seats/${seatId}/release`,{method:'POST',credentials:'include'});
+  showToast('Seat released','success');
+  loadSeats();
+}
+
+async function claimSeatFaculty(seatId) {
+  await fetch(`/api/rooms/room204/seats/${seatId}/claim`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'Manual'}),credentials:'include'});
+  showToast('Marked present','success');
+  loadSeats();
+}
+
+async function markAllPresent() {
+  const available = allSeats.filter(s=>s.status==='available');
+  for(const s of available.slice(0,5)){
+    await fetch(`/api/rooms/room204/seats/${s.id}/claim`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:'Manual'}),credentials:'include'});
+  }
+  showToast(`Marked ${Math.min(5,available.length)} seats present`,'success');
+  loadSeats();
+}
+
+// ATTENDANCE
+async function loadAttendance() {
+  try {
+    const res = await fetch('/api/rooms/room204/attendance',{credentials:'include'});
+    allAttendance = await res.json();
+    renderAttendance(allAttendance);
+  } catch(e){}
+}
+
+function renderAttendance(data) {
+  const colors = ['#00d4ff','#10b981','#a78bfa','#f59e0b','#f87171','#818cf8','#34d399','#fb923c'];
+  const tbody = document.getElementById('attBody');
+  if(!tbody) return;
+  tbody.innerHTML = data.map((a,i)=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar" style="background:${colors[i%colors.length]}18;color:${colors[i%colors.length]}">${(a.studentName||'?').split(' ').map(x=>x[0]).join('').slice(0,2)}</div>
+        ${a.studentName||'Unknown'}
+      </div></td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${a.rollNo||'-'}</td>
+      <td style="font-family:var(--mono);font-size:12px">${a.seatLabel||'-'}</td>
+      <td><div class="att-status"><span class="dot dot-green"></span><span style="color:var(--acc3)">${a.status}</span></div></td>
+      <td style="font-size:12px;font-family:var(--mono)">${new Date(a.timestamp).toLocaleTimeString()}</td>
+      <td><span class="badge badge-${a.method==='QR'?'blue':a.method==='Face'?'green':'amber'}">${a.method||'Manual'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="showToast('Record locked','')">🔒</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No attendance records yet</td></tr>';
+
+  const total = 42;
+  const present = data.length;
+  document.getElementById('attPresent').textContent = present;
+  document.getElementById('attAbsent').textContent = Math.max(0,total-present);
+  document.getElementById('attPct').textContent = Math.round(present/total*100)+'%';
+}
+
+function filterTable(q) {
+  renderAttendance(allAttendance.filter(a=>(a.studentName||'').toLowerCase().includes(q.toLowerCase())||(a.rollNo||'').includes(q)));
+}
+
+// ROOMS
+let rooms = [];
+async function loadRooms() {
+  try {
+    const res = await fetch('/api/rooms',{credentials:'include'});
+    rooms = await res.json();
+    renderRoomsList();
+    renderRoomStatus();
+  } catch(e){}
+}
+
+function renderRoomsList() {
+  document.getElementById('roomsList').innerHTML = rooms.map(r=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${r.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">${r.building} · ${r.subject}</div>
+        </div>
+        <span class="badge badge-green">Active</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${r.rows} rows × ${r.cols} cols = ${r.rows*r.cols} seats</div>
+      <div class="action-row">
+        <button class="btn btn-sm btn-outline" onclick="openQR()">🔲 QR</button>
+        <button class="btn btn-sm btn-ghost" onclick="showView('seatmap')">🪑 Map</button>
+        <button class="btn btn-sm btn-ghost" onclick="showView('attendance')">✅ Attendance</button>
+      </div>
+    </div>
+  `).join('') || '<div style="color:var(--text3)">No rooms yet</div>';
+}
+
+function renderRoomStatus() {
+  const el = document.getElementById('roomStatusList');
+  if(!el) return;
+  el.innerHTML = rooms.map(r=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px;margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${r.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${r.subject}</div>
+      </div>
+      <span class="badge badge-green">Active</span>
+    </div>
+  `).join('');
+}
+
+function showAddRoom(){document.getElementById('addRoomForm').style.display='block';}
+async function addRoom(){
+  const body={name:document.getElementById('rName').value,building:document.getElementById('rBuilding').value,subject:document.getElementById('rSubject').value,rows:+document.getElementById('rRows').value,cols:+document.getElementById('rCols').value};
+  const res=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});
+  if(res.ok){showToast('Room added!','success');loadRooms();document.getElementById('addRoomForm').style.display='none';}
+}
+
+// QR CODE
+async function openQR(){
+  document.getElementById('qrModal').classList.add('open');
+  document.getElementById('qrImgWrap').innerHTML='<p style="font-size:12px;color:#999;padding:60px 0">Generating…</p>';
+  const res=await fetch('/api/rooms/room204/qr',{credentials:'include'});
+  const data=await res.json();
+  document.getElementById('qrImgWrap').innerHTML=`<img src="${data.qr}" style="width:184px;height:184px">`;
+  document.getElementById('qrUrl').textContent=data.url;
+}
+function closeQR(){document.getElementById('qrModal').classList.remove('open');}
+function printQR(){window.print();}
+function copyUrl(){navigator.clipboard.writeText(document.getElementById('qrUrl').textContent);showToast('URL copied!','success');}
+
+// EXPORT
+async function exportCSV(){
+  window.open('/api/attendance/export/room204','_blank');
+  showToast('Downloading CSV…','success');
+}
+function sendReport(){showToast('📧 Report sent to department email','success');}
+
+// CHART
+function renderWeekChart(){
+  const vals=[88,92,78,95,91,45];
+  const el=document.getElementById('weekChart');
+  if(!el) return;
+  el.innerHTML=vals.map(v=>`<div class="bar-col"><div class="bar-val">${v}%</div><div class="bar-fill" style="height:${v}px;background:${v>=90?'var(--acc3)':v>=80?'var(--acc)':'var(--warn)'}88"></div></div>`).join('');
+}
+
+// ALERTS
+function renderAlerts(){
+  const el=document.getElementById('alertsList');
+  if(!el) return;
+  const alerts=[{name:'Yash Patel',pct:62},{name:'Nisha Shah',pct:68},{name:'Kiran Mehta',pct:71}];
+  el.innerHTML=alerts.map(a=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span>${a.name}</span><strong style="color:${a.pct<70?'var(--danger)':'var(--warn)'}">${a.pct}%</strong>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${a.pct}%;background:${a.pct<70?'var(--danger)':'var(--warn)'}"></div></div>
+    </div>
+  `).join('');
+}
+
+async function loadRecentAttendance(){
+  const el=document.getElementById('recentList');
+  if(!el) return;
+  try{
+    const res=await fetch('/api/rooms/room204/attendance',{credentials:'include'});
+    const data=await res.json();
+    const recent=data.slice(-5).reverse();
+    el.innerHTML=recent.length?recent.map(a=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="dot dot-green"></span>
+        <div style="flex:1"><div style="font-size:12px">${a.studentName}</div><div style="font-size:10px;color:var(--text3)">${a.seatLabel} · ${a.method}</div></div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${new Date(a.timestamp).toLocaleTimeString()}</div>
+      </div>
+    `).join(''):'<p style="font-size:12px;color:var(--text3)">No recent check-ins</p>';
+  }catch(e){}
+}
+
+// SOCKET
+socket.on('seats-state',seats=>{allSeats=seats;if(document.getElementById('view-seatmap').classList.contains('active'))renderSeatGrid(seats);});
+
+// TOAST
+function showToast(msg,type=''){
+  const t=document.createElement('div');t.className=`toast toast-${type}`;
+  t.innerHTML=`<span class="toast-icon">${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+async function logout(){await fetch('/api/auth/logout',{method:'POST',credentials:'include'});window.location='/login';}
+
+init();
+</script>
+</body>
+</html>

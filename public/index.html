@@ -2,14 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Admin Dashboard - AR Classroom Attendance</title>
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/toast.css">
+<link rel="stylesheet" href="/css/loading.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/responsive.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
   <header class="topbar">
     <h1>AR Classroom Attendance</h1>
     <span class="subtitle">Admin Dashboard</span>
+    <button id="themeToggleBtn" class="theme-toggle">🌙 Dark Mode</button>
+    <button id="logoutBtn" class="theme-toggle">Logout</button>
   </header>
 
   <nav class="tabs">
@@ -52,6 +60,7 @@
     <section id="log" class="tab-panel">
       <h2>Attendance Log</h2>
       <button id="exportCsvBtn">Export CSV</button>
+      <button id="exportPdfBtn">Export PDF</button>
       <table id="attendanceTable">
         <thead>
           <tr><th>Student</th><th>Seat</th><th>Time</th></tr>
@@ -76,7 +85,8 @@
     </section>
 
   </main>
-
+  <script src="/js/theme.js"></script>
+  <script src="/js/toast.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>
