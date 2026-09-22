@@ -5,27 +5,37 @@
 
 ---
 
-## 🚀 Quick Start (Run in 60 seconds)
+## 🌍 Live Demo
 
-```bash
-# 1. Install dependencies
-npm install
+**🔗 [https://ar-classroom-attendance.onrender.com](https://ar-classroom-attendance.onrender.com)**
 
-# 2. Start the server
-node server.js
-
-# 3. Open browser
-http://localhost:3000
-```
-
----
-
-## 🔑 Demo Login Credentials
+> ⏳ Hosted on Render's free tier — if the site has been idle, the first load may take ~50 seconds while the server wakes up.
 
 | Role    | Email                  | Password   |
 |---------|------------------------|------------|
 | Faculty | `faculty@demo.com`     | `password` |
 | Student | `student@demo.com`     | `password` |
+
+---
+
+## 🚀 Quick Start (Run Locally in 60 seconds)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Ajitabhjha13/ar-classroom-attendance.git
+cd ar-classroom-attendance
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the server
+npm start
+
+# 4. Open browser
+http://localhost:3000
+```
+
+> Requires Node.js 18+
 
 ---
 
@@ -36,12 +46,14 @@ ar-classroom-attendance/
 ├── server.js              # Main Express + Socket.io server
 ├── package.json
 ├── data/
-│   ├── db.json            # JSON file database (persists across restarts)
+│   ├── db.json            # JSON file database (seed data + demo users)
 │   └── store.js           # loadData() / saveData() helpers
 ├── routes/
 │   ├── auth.js            # Login, Signup, Logout, /me
 │   └── api.js             # Rooms, Seats, Attendance, QR, Stats
 └── public/
+    ├── css/               # Modular stylesheets (auth, landing, animations, responsive...)
+    ├── js/                # Client scripts (dashboard, student, ar, theme, toast)
     ├── style.css          # Shared design system
     ├── landing.html       # Hero landing page
     ├── login.html         # Faculty + Student login
@@ -119,7 +131,7 @@ Socket.io (Real-time)  ←→  Express API (REST)
     │                            │
     ▼                            ▼
 data/db.json  ←─────────  routes/api.js
-(Persistent)             (Auth + CRUD)
+(JSON storage)           (Auth + CRUD)
     │
     ▼
 Faculty Dashboard (/dashboard)
@@ -139,7 +151,7 @@ Faculty Dashboard (/dashboard)
 - **Real-time** — Socket.io broadcasts seat changes to all connected users instantly
 - **Face Detection** — TensorFlow.js BlazeFace integration (>85% confidence auto-marks)
 - **Role Auth** — Faculty vs Student with bcrypt + express-session
-- **JSON Persistence** — Data survives server restarts via `data/db.json`
+- **JSON Persistence** — Data stored in `data/db.json` (persists across restarts when run locally)
 - **CSV Export** — Download attendance records as spreadsheet
 - **Dark UI** — Polished Space Grotesk design with animated elements
 
@@ -157,6 +169,19 @@ Faculty Dashboard (/dashboard)
 | QR Code    | qrcode npm package               |
 | Database   | JSON file (db.json)              |
 | Frontend   | Vanilla JS + CSS Variables       |
+| Hosting    | Render (Web Service, free tier)  |
+
+---
+
+## ☁️ Deployment
+
+Deployed on **[Render](https://render.com)** as a Node web service:
+
+- **Build Command:** `npm install`
+- **Start Command:** `node server.js`
+- Auto-deploys on every push to the `main` branch.
+
+> ⚠️ **Note:** Render's free tier uses an ephemeral filesystem, so new signups and attendance records on the live demo reset whenever the server restarts or sleeps. Demo accounts and seed data are always available. For permanent storage, the JSON store can be swapped for a database like MongoDB Atlas.
 
 ---
 
