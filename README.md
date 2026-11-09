@@ -1,6 +1,6 @@
 # 📡 ARClass — AR Classroom Seating & Attendance System
 
-> Semester Project — Zenith Institute of Technology  
+> Semester project · Parul University (the app uses a fictional college, *Zenith Institute of Technology*, as demo data)  
 > Tech Stack: Node.js · Express · Socket.io · A-Frame (WebXR) · TensorFlow.js · JSON DB
 
 ---
@@ -185,7 +185,7 @@ Deployed on **[Render](https://render.com)** as a Node web service:
 
 ---
 
-## 📋 Viva Presentation Flow
+## 🎬 Demo Walkthrough
 
 1. Show landing page → explain the problem (manual roll calls)
 2. Log in as **Faculty** → show Dashboard stats, seat map, QR generator
@@ -198,4 +198,4 @@ Deployed on **[Render](https://render.com)** as a Node web service:
 
 ---
 
-*Built with ❤️ for Semester Project Demo*
+*Built by [Ajitabh Kumar Jha](https://github.com/Ajitabhjha13) · [LinkedIn](https://www.linkedin.com/in/ajitabhjha13)*
